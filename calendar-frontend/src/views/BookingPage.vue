@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col">
-    <h1 class="text-xl font-bold">Schedule New Session</h1>
+    <h1 class="text-xl font-bold">Schedule New Event</h1>
     <section class="grid grid-cols-12 my-10">
       <form @submit.prevent="handleSubmit" class="col-span-4">
         <div class="flex flex-col h-full mr-10 gap-y-4">
@@ -47,24 +47,29 @@
       </form>
       <div class="h-full border border-slate-200 col-span-8 mx-10 rounded-xl">
         <!-- Duration component -->
-        <div class="flex flex-row justify-start items-center py-3 mx-5">
-          <label for="durationSelect">Duration(Minutes):</label>
-          <select
-            class="border border-slate-200 rounded-xl px-5"
-            name="duration"
-            id="durationSelect"
-            v-model="duration"
-          >
-            <option value="30">30</option>
-            <option value="45">45</option>
-          </select>
-        </div>
-        <SlotSelector
-          class="mx-5 border-t border-slate-200"
-          :time-slots="freeSlots"
-          :duration="duration"
-          @handle-slot-booking="handleSlotBooking"
-        />
+        <template v-if="!isBookingSuccessViewShown">
+          <div class="flex flex-row justify-start items-center py-3 mx-5">
+            <label for="durationSelect">Duration(Minutes):</label>
+            <select
+              class="border border-slate-200 rounded-xl px-5"
+              name="duration"
+              id="durationSelect"
+              v-model="duration"
+            >
+              <option value="30">30</option>
+              <option value="45">45</option>
+            </select>
+          </div>
+          <SlotSelector
+            class="mx-5 border-t border-slate-200"
+            :time-slots="freeSlots"
+            :duration="duration"
+            @handle-slot-booking="handleSlotBooking"
+          />
+        </template>
+        <template v-else>
+          <BookingSuccess />
+        </template>
       </div>
     </section>
   </div>
@@ -74,6 +79,7 @@ import { ref } from 'vue'
 import { DatePicker } from 'v-calendar'
 import SlotSelector from '@/components/SlotSelector.vue'
 import SelectDateButton from '@/components/SelectDateButton.vue'
+import BookingSuccess from '@/components/BookingSuccess.vue'
 
 import { apiCall } from '../../utilities/apiService'
 
@@ -92,7 +98,7 @@ const isDatePickerOpen = ref(false)
 
 const date = ref(new Date())
 
-const duration = ref(15)
+const duration = ref(30)
 const timezone = ref('Asia/Kolkata')
 
 const freeSlots = ref([])
@@ -135,7 +141,7 @@ async function fetchFreeSlots(slotTime: string, timezone: string) {
   return result
 }
 
-const isBookingViewShown = ref(false)
+const isBookingSuccessViewShown = ref(false)
 
 const toggleBookingView = () => {}
 
