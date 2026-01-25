@@ -37,20 +37,6 @@ export default class EventRepository {
     return this.transformSnapshotToBookedSlots(snapshot);
   };
 
-  // /**
-  //  * Saves a slot (non-transactional)
-  //  * Use this for standalone writes outside transactions
-  //  */
-  // saveSlotQuery = async (startTime: Date, endTime: Date, duration: number) => {
-  //   const result = await this.#db.collection("events").add({
-  //     startTime: Timestamp.fromDate(startTime),
-  //     duration: duration,
-  //     endTime: Timestamp.fromDate(endTime),
-  //   });
-
-  //   return result;
-  // };
-
   /**
    * Transforms Firestore QuerySnapshot into a structured array of booked slots
    * @param snapshot - Firestore QuerySnapshot containing event documents

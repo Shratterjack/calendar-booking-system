@@ -255,11 +255,16 @@ export default class EventsService {
       return [];
     }
 
-    return bookedSlotData;
+    const response = {
+      result: bookedSlotData,
+      count: bookedSlotData.length,
+    };
+
+    return response;
   };
 
   formatTimeSlot = (dateTime: Date, timeZone: string) => {
-    return dateTime.toLocaleString("en-IN", {
+    return dateTime.toLocaleString("en-GB", {
       timeZone: timeZone,
       hour: "2-digit",
       minute: "2-digit",
