@@ -64,11 +64,17 @@ const createBookingAction = async (
 
     const eventsService = new EventsService();
     const result = await eventsService.bookEventSlot(slotTime, duration);
-    res.status(200).json({
-      success: true,
-      data: result,
-    });
-    // res.status(200).send("helo");
+    if (result.isBookingSuccess) {
+      res.status(200).json({
+        success: true,
+        data: result,
+      });
+    } else {
+      res.status(422).json({
+        success: false,
+        data: result,
+      });
+    }
   } catch {}
 };
 

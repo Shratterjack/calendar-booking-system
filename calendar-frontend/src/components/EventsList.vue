@@ -1,58 +1,50 @@
 <template>
-  <div class="w-full">
-    <table class="table-auto rounded-xl">
-      <thead class="bg-slate-50 border border-slate-200">
+  <table class="table-auto rounded-xl">
+    <thead class="bg-slate-50 border border-slate-200">
+      <tr>
+        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          ID
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          Date And Time
+        </th>
+        <th class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
+          Duration
+        </th>
+      </tr>
+    </thead>
+    <tbody class="bg-white divide-y divide-slate-200">
+      <template v-if="eventData.length === 0">
         <tr>
-          <th
-            class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-          >
-            ID
-          </th>
-          <th
-            class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-          >
-            Date And Time
-          </th>
-          <th
-            class="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"
-          >
-            Duration
-          </th>
+          <td colspan="2" class="px-6 py-8 text-center text-slate-500">No events found</td>
         </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-slate-200">
-        <template v-if="eventData.length === 0">
-          <tr>
-            <td colspan="2" class="px-6 py-8 text-center text-slate-500">No events found</td>
-          </tr>
-        </template>
-        <template v-else>
-          <tr
-            v-for="(event, index) in eventData"
-            :key="index"
-            class="border border-slate-200 hover:bg-slate-50 transition-colors"
-          >
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-              {{ index + 1 }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-              {{ formatDateTime(event.startingTime) }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
-              {{ event.duration }}
-            </td>
-          </tr>
-        </template>
-      </tbody>
-    </table>
-  </div>
+      </template>
+      <template v-else>
+        <tr
+          v-for="(event, index) in eventData"
+          :key="index"
+          class="border border-slate-200 hover:bg-slate-50 transition-colors"
+        >
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+            {{ index + 1 }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+            {{ formatDateTime(event.bookedStartTime) }}
+          </td>
+          <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-600">
+            {{ event.duration }}
+          </td>
+        </tr>
+      </template>
+    </tbody>
+  </table>
 </template>
 
 <script setup lang="ts">
 import { onMounted } from 'vue'
 
 type Event = {
-  startingTime: string
+  bookedStartTime: string
   duration: number
 }
 
@@ -82,8 +74,8 @@ const calculateDuration = (event: Event) => {
     return 'N/A'
   }
 
-  const start = new Date(event.startingTime)
-  const end = new Date(event.endingTime)
+  const start = new Date(event.bookedStartTime)
+  const end = new Date(event.bookedEndTime)
   const durationMs = end.getTime() - start.getTime()
 
   const hours = Math.floor(durationMs / (1000 * 60 * 60))

@@ -5,6 +5,6 @@ export type FreeSlotsResponse = {
 
 export type BookedSlot = {
   bookedStartTime: Date;
+  duration: Number;
+  bookedEndTime: Date;
 };
-
-export type QuerySnapshotResult = BookedSlot[];

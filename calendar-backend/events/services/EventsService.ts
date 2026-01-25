@@ -1,21 +1,20 @@
-import { Timestamp } from "firebase-admin/firestore";
 import dayjs from "dayjs";
 import utc from "dayjs/plugin/utc.js";
 import timezone from "dayjs/plugin/timezone.js";
-import FirestoreService from "../../shared/FirestoreService.ts";
-import type { FreeSlotsResponse } from "../types/events.ts";
+import { Timestamp } from "firebase-admin/firestore";
+
+import type { FreeSlotsResponse, BookedSlot } from "../types/events.ts";
 import { SlotConflictErrors } from "../constants/errorResponse.ts";
+import EventRepository from "../repository/EventRepository.ts";
 
 // Extend dayjs with timezone support
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
 export default class EventsService {
-  #db;
+  eventRepo;
   constructor() {
-    const firestore = new FirestoreService();
-    const db = firestore.getDb();
-    this.#db = db;
+    this.eventRepo = new EventRepository();
   }
 
   addMinutes = (date: Date, minutes: number) => {
@@ -34,6 +33,8 @@ export default class EventsService {
 
     // Create dates in the client's timezone, then convert to UTC
     // This ensures working hours respect the client's local time
+    // dayjs.tz() creates a moment in the specified timezone
+    // .toDate() converts to JavaScript Date (which is always stored in UTC internally)
     const startingHourTime = dayjs
       .tz(
         `${currentDate} ${startHour.toString().padStart(2, "0")}:00:00`,
@@ -65,24 +66,11 @@ export default class EventsService {
 
     const duration = Number(process.env.DURATION);
 
-    const eventsRef = this.#db.collection("events");
+    const bookedSlotData = await this.eventRepo.getSlotsInIntervalQuery(
+      startingHourTime,
+      endingHourTime,
+    );
 
-    const snapshot = await eventsRef
-      .where("startTime", ">=", Timestamp.fromDate(startingHourTime))
-      .where("endTime", "<", Timestamp.fromDate(endingHourTime))
-      .orderBy("startTime", "asc")
-      .get();
-
-    let bookedSlots = [];
-
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-      let temp = {
-        bookedStartTime: data.startTime.toDate(),
-      };
-
-      bookedSlots.push(temp);
-    });
     let freeSlots = [];
 
     let i = 0;
@@ -93,8 +81,8 @@ export default class EventsService {
         startingDisplayTime: this.formatTimeSlot(startingHourTime, timezone),
       };
 
-      if (i < bookedSlots.length) {
-        let slot = bookedSlots[i];
+      if (i < bookedSlotData.length) {
+        let slot = bookedSlotData[i];
 
         let { bookedStartTime } = slot;
         if (startingHourTime.getTime() < bookedStartTime.getTime()) {
@@ -113,177 +101,161 @@ export default class EventsService {
     return freeSlots;
   };
 
-  checkSlotAvailablity = async (
+  checkSlotAvailablity = (
     requestedStartTime: Date,
     requestedEndTime: Date,
+    bookedSlots: BookedSlot[],
   ) => {
-    // For booking validation, use UTC since booking times are already in UTC
-    const { startingHourTime, endingHourTime } = this.getSlotAvailableHours(
-      requestedStartTime.toISOString().slice(0, 10),
-      "UTC",
-    );
+    let isSlotAvailable = true;
 
-    if (
-      requestedStartTime < startingHourTime ||
-      requestedStartTime >= endingHourTime
-    ) {
-      return {
-        isSlotAvailable: false,
-        errorCode: "SLOT_OUTSIDE_WORKING_HRS",
-        message: SlotConflictErrors.SLOT_OUTSIDE_WORKING_HRS,
-      };
+    // Check 1: If there are no results, slot is available
+    if (bookedSlots.length === 0) {
+      return { isSlotAvailable };
     }
 
-    // console.log("oneHrBeforeSlot", oneHrBeforeSlot);
-    // console.log("onHrAfterSlot", onHrAfterSlot);
-    //
-    // console.log("onHrAfterSlot", onHrAfterSlot);
-
-    // // Query to fetch booked slots that occur within the requested time range
-    // // We need to find events where:
-    // // - Event starts after requested start time AND
-    // // - Event ends aft requested end time
-    const oneHrBeforeSlot = new Date(
-      requestedStartTime.getTime() - 60 * 60 * 1000,
-    );
-    const onHrAfterSlot = new Date(
-      requestedStartTime.getTime() + 60 * 60 * 1000,
-    );
-
-    const eventsRef = this.#db.collection("events");
-
-    const snapshot = await eventsRef
-      .where("startTime", ">=", Timestamp.fromDate(oneHrBeforeSlot))
-      .where("endTime", "<", Timestamp.fromDate(onHrAfterSlot))
-      .orderBy("startTime", "asc")
-      .get();
-
-    // // // Check 1: If there are no results, slot is available
-    if (snapshot.empty) {
-      return {
-        isSlotAvailable: true,
-        errorCode: "",
-        message:
-          "No booked slots found in the requested schedule- timeslot is available",
-      };
-    }
     // Check 2: If there are results, check each booked slot
-    for (const doc of snapshot.docs) {
-      const data = doc.data();
-
-      // // Convert Firestore Timestamps to UTC Date objects
-      const bookedStartTime = data.startTime.toDate();
-      const bookedEndTime = data.endTime.toDate();
+    for (const slot of bookedSlots) {
+      // Convert Firestore Timestamps to UTC Date objects
+      const { bookedStartTime } = slot;
+      const { bookedEndTime } = slot;
 
       console.log("requestedStartUTC", requestedStartTime.getTime());
       console.log("bookedStartUTC", bookedEndTime.getTime());
 
-      // // Check 2.1: requestedStartTime === bookedStartTime
+      // Check 2.1: requestedStartTime === bookedStartTime
       if (requestedStartTime.getTime() === bookedStartTime.getTime()) {
-        console.log(SlotConflictErrors.SLOT_ALREADY_BOOKED);
-        return {
-          isSlotAvailable: false,
-          errorCode: "SLOT_ALREADY_BOOKED:",
-          message: SlotConflictErrors.SLOT_ALREADY_BOOKED,
-        };
+        isSlotAvailable = false;
+        throw new Error(SlotConflictErrors.SLOT_ALREADY_BOOKED.name);
       }
 
-      // // Check 2.2: bookedStartTime < requestedStartTime AND requestedEndTime < bookedEndTime
-      // // This means the requested slot is completely within a booked slot
+      // Check 2.2: bookedStartTime < requestedStartTime AND requestedEndTime < bookedEndTime
+      // This means the requested slot is completely within a booked slot
       if (
         requestedStartTime.getTime() > bookedStartTime.getTime() &&
         requestedStartTime.getTime() < bookedEndTime.getTime()
       ) {
-        console.log(SlotConflictErrors.SLOT_OVERLAPS_EXISTING_MEETING);
-        return {
-          isSlotAvailable: false,
-          errorCode: "SLOT_OVERLAPS_EXISTING_MEETING",
-          message: SlotConflictErrors.SLOT_OVERLAPS_EXISTING_MEETING,
-        };
+        isSlotAvailable = false;
+        throw new Error(SlotConflictErrors.SLOT_OVERLAPS_EXISTING_MEETING.name);
       }
 
-      // // Check 2.3: bookedStartTime > requestedStartTime AND bookedStartTime < requestedEndTime
-      // // This means the requested slot overlaps with the start of a booked slot
+      // Check 2.3: bookedStartTime > requestedStartTime AND bookedStartTime < requestedEndTime
+      // This means the requested slot overlaps with the start of a booked slot
       if (
         bookedStartTime.getTime() > requestedStartTime.getTime() &&
         bookedStartTime.getTime() < requestedEndTime.getTime()
       ) {
-        return {
-          isSlotAvailable: false,
-          errorCode: "SLOT_OVERLAPS_MEETING_START",
-          message: SlotConflictErrors.SLOT_OVERLAPS_MEETING_START,
-        };
+        isSlotAvailable = false;
+        throw new Error(SlotConflictErrors.SLOT_OVERLAPS_MEETING_START.name);
       }
     }
 
-    // // If no conflicts found, slot is available
+    // If no conflicts found, slot is available
     return {
       isSlotAvailable: true,
-      errorCode: "",
-      message: "No conflicts found - timeslot is available",
     };
   };
 
   bookEventSlot = async (slotTime: string, duration: number) => {
-    const requestedStartTime = new Date(slotTime);
-    const requestedEndTime = this.addMinutes(requestedStartTime, duration);
+    try {
+      const requestedStartTime = new Date(slotTime);
+      const requestedEndTime = this.addMinutes(requestedStartTime, duration);
 
-    console.log("startTime", requestedStartTime);
+      console.log("startTime", requestedStartTime);
 
-    console.log("endTime", requestedEndTime);
+      console.log("endTime", requestedEndTime);
 
-    const { isSlotAvailable, errorCode, message } =
-      await this.checkSlotAvailablity(requestedStartTime, requestedEndTime);
+      // Use default timezone from .env for working hours validation
+      // This checks if the requested slot is between START_HOUR - END_HOUR in the configured timezone
+      const userTimezone = process.env.TIMEZONE;
 
-    if (isSlotAvailable) {
-      const docRef = await this.#db.collection("events").add({
-        startTime: Timestamp.fromDate(requestedStartTime),
-        duration: duration,
-        endTime: Timestamp.fromDate(requestedEndTime),
+      const { startingHourTime, endingHourTime } = this.getSlotAvailableHours(
+        requestedStartTime.toISOString().slice(0, 10),
+        userTimezone,
+      );
+
+      if (
+        requestedStartTime < startingHourTime ||
+        requestedStartTime >= endingHourTime
+      ) {
+        throw new Error(SlotConflictErrors.SLOT_OUTSIDE_WORKING_HRS.name);
+      }
+
+      // Define time window for conflict checking
+      const oneHrBeforeSlot = new Date(
+        requestedStartTime.getTime() - 60 * 60 * 1000,
+      );
+      const oneHrAfterSlot = new Date(
+        requestedStartTime.getTime() + 60 * 60 * 1000,
+      );
+
+      // STEP 2: Transaction - atomic read + validate + write
+      const res = await this.eventRepo.getDBConn().runTransaction(async (t) => {
+        // Build query from repository (doesn't execute yet)
+        const query = this.eventRepo.buildSlotsInIntervalQuery(
+          oneHrBeforeSlot,
+          oneHrAfterSlot,
+        );
+
+        // Execute query within transaction (critical for race condition protection)
+        const snapshot = await t.get(query);
+
+        // Transform snapshot to booked slots
+        const bookedSlotData =
+          this.eventRepo.transformSnapshotToBookedSlots(snapshot);
+
+        // Check for conflicts
+        const { isSlotAvailable } = this.checkSlotAvailablity(
+          requestedStartTime,
+          requestedEndTime,
+          bookedSlotData,
+        );
+
+        if (isSlotAvailable) {
+          // Get document reference from repository
+          const docRef = this.eventRepo.createEventDocRef();
+
+          // MUST use transaction.set() for atomic operation
+          t.set(docRef, {
+            startTime: Timestamp.fromDate(requestedStartTime),
+            duration: duration,
+            endTime: Timestamp.fromDate(requestedEndTime),
+          });
+        }
+
+        return isSlotAvailable;
       });
-    }
 
-    return {
-      isBookingSuccess: isSlotAvailable,
-      message: message,
-      errorCode: errorCode,
-    };
+      return {
+        isBookingSuccess: res,
+        errorCode: "",
+        message: "Slot Booked Successfully",
+      };
+    } catch (error) {
+      // Handle errors gracefully
+      const errorInfo = SlotConflictErrors[error.message];
+      return {
+        isBookingSuccess: false,
+        errorCode: errorInfo?.name || "UNKNOWN_ERROR",
+        message: errorInfo?.message || error.message,
+      };
+    }
   };
 
   getBookedEvents = async (startDate: string, endDate: string) => {
     const startingDate = new Date(startDate);
 
     const endingLastDate = new Date(endDate);
-    endingLastDate.setHours(23, 59, 59);
 
-    const eventsRef = this.#db.collection("events");
+    const bookedSlotData = await this.eventRepo.getSlotsInIntervalQuery(
+      startingDate,
+      endingLastDate,
+    );
 
-    const snapshot = await eventsRef
-      .where("startTime", ">=", Timestamp.fromDate(startingDate))
-      .where("endTime", "<", Timestamp.fromDate(endingLastDate))
-      .orderBy("startTime", "asc")
-      .get();
-
-    if (snapshot.empty) {
-      console.log("No matching documents.");
+    if (bookedSlotData.length == 0) {
       return [];
     }
 
-    let result = [];
-    snapshot.forEach((doc) => {
-      const data = doc.data();
-
-      let temp = {
-        startingTime: data.startTime.toDate(),
-        duration: data.duration,
-      };
-
-      result.push(temp);
-    });
-
-    console.log("result", result);
-
-    return result;
+    return bookedSlotData;
   };
 
   formatTimeSlot = (dateTime: Date, timeZone: string) => {

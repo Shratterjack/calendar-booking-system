@@ -48,16 +48,16 @@
       <div class="h-full border border-slate-200 col-span-8 mx-10 rounded-xl">
         <!-- Duration component -->
         <template v-if="!isBookingSuccessViewShown">
-          <div class="flex flex-row justify-start items-center py-3 mx-5">
-            <label for="durationSelect">Duration(Minutes):</label>
+          <div class="flex flex-row justify-start items-center gap-3 py-2 mx-5">
+            <label for="durationSelect" class="font-medium">Duration (Minutes):</label>
             <select
-              class="border border-slate-200 rounded-xl px-5"
+              class="border border-slate-200 rounded-xl px-5 py-2 cursor-pointer hover:border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
               name="duration"
               id="durationSelect"
               v-model="duration"
             >
-              <option value="30">30</option>
-              <option value="45">45</option>
+              <option :value="30">30</option>
+              <option :value="45">45</option>
             </select>
           </div>
           <SlotSelector

@@ -2,29 +2,39 @@
   <div class="flex flex-col">
     <h1 class="text-xl font-bold">Events</h1>
     <section class="grid grid-cols-12 my-10">
-      <div class="flex flex-col">
-        <div class="flex gap-x-5">
-          <div class="py-5">
-            <label for="startDate">Select Start date</label>
-            <input type="date" id="startDate" name="startDate" />
+      <div class="flex flex-col col-span-12">
+        <div class="flex gap-x-5 items-end border border-slate-200 rounded-xl p-5 mb-6">
+          <div class="flex flex-col">
+            <label for="startDate" class="font-medium mb-2">Select Start Date</label>
+            <input
+              type="date"
+              id="startDate"
+              name="startDate"
+              v-model="startDate"
+              class="border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-          <div class="py-5">
-            <label for="endDate">Select End date</label>
-            <input type="date" id="endDate" name="endDate" />
+          <div class="flex flex-col">
+            <label for="endDate" class="font-medium mb-2">Select End Date</label>
+            <input
+              type="date"
+              id="endDate"
+              name="endDate"
+              v-model="endDate"
+              :min="startDate"
+              class="border border-slate-200 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
           </div>
-          <!-- <div class="flex flex-col px-10">
-            <label for="timezoneSelect">Timezone</label>
-            <select
-              class="py-3 border border-slate-200 rounded-xl"
-              name="timezone"
-              id="timezoneSelect"
-            >
-              <option default value="Asia/Kolkata">Asia/Kolkata</option>
-              <option value="America/Los_Angeles">America/Los_Angeles</option>
-              <option value="Canada/Atlantic">Canada/Atlantic</option>
-              <option value="Europe/London">Europe/London</option>
-            </select>
-          </div> -->
+          <button
+            @click="handleApplyFilter"
+            :disabled="!startDate || !endDate || !isDateRangeValid"
+            class="bg-zinc-950 text-neutral-50 px-6 py-2 rounded-xl cursor-pointer hover:bg-zinc-800 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            Apply Filter
+          </button>
+        </div>
+        <div v-if="dateError" class="text-red-600 mb-4 px-2">
+          {{ dateError }}
         </div>
         <EventsList :event-data="eventList" />
       </div>
@@ -32,44 +42,43 @@
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted, ref, onBeforeMount } from 'vue'
+import { computed, ref } from 'vue'
 import EventsList from '@/components/EventsList.vue'
 
 import { apiCall } from '../../utilities/apiService'
-//
-const eventList = ref([])
 
-const fetchEvents = async () => {
-  const params = new URLSearchParams({ startDate: '2026-01-24', endDate: '2026-01-25' })
+const eventList = ref([])
+const startDate = ref('')
+const endDate = ref('')
+const dateError = ref('')
+
+const isDateRangeValid = computed(() => {
+  if (!startDate.value || !endDate.value) return false
+  return new Date(startDate.value) < new Date(endDate.value)
+})
+
+const fetchEvents = async (start: string, end: string) => {
+  const params = new URLSearchParams({ startDate: start, endDate: end })
 
   const path = `/events/list?${params}`
 
   const result = await apiCall({ path: path, requestOptions: { method: 'GET' } })
-  // eventList.value = result
   return result
-
-  const formattedResult = result.map((slot) => {
-    const startTime = new Date(slot.startingTime)
-
-    const formattedTime = startTime.toLocaleString('en-IN', {
-      timeZone: 'Asia/Kolkata',
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-    })
-
-    return {
-      formattedTime: formattedTime,
-    }
-  })
-
-  console.log('formattedResult', formattedResult)
 }
 
-onBeforeMount(async () => {
-  eventList.value = await fetchEvents()
-})
+const handleApplyFilter = async () => {
+  dateError.value = ''
+
+  if (!startDate.value || !endDate.value) {
+    dateError.value = 'Please select both start and end dates'
+    return
+  }
+
+  if (new Date(startDate.value) >= new Date(endDate.value)) {
+    dateError.value = 'Start date must be before end date'
+    return
+  }
+
+  eventList.value = await fetchEvents(startDate.value, endDate.value)
+}
 </script>
