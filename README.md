@@ -2,10 +2,13 @@
 
 A full-stack calendar booking application with a Vue.js frontend and Node.js/Express backend using Firebase Firestore.
 
+Link: https://calendar-booking-2pc6.onrender.com/
+
 ## Project Structure
 
 - **[calendar-backend](./calendar-backend/README.md)** - RESTful API service for managing calendar events with slot availability checking
 - **[calendar-frontend](./calendar-frontend/README.md)** - Vue 3 + Vite frontend application
+
 
 ## Quick Setup
 
@@ -21,6 +24,7 @@ npm run dev
 ```bash
 cd calendar-frontend
 npm install
+# Configure .env for the backend api
 npm run dev
 ```
 
