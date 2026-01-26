@@ -41,16 +41,13 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted } from 'vue'
-
-type Event = {
+type BookedEvent = {
   bookedStartTime: string
   duration: number
 }
 
-const props = defineProps<{
-  eventData: Event[]
-  timezone: string
+defineProps<{
+  eventData: BookedEvent[]
 }>()
 
 const formatDateTime = (dateTime: string) => {
@@ -68,28 +65,4 @@ const formatDateTime = (dateTime: string) => {
 
   return date.toLocaleString('en-US', options).replace(',', ' at')
 }
-
-const calculateDuration = (event: Event) => {
-  if (!event.endingTime) {
-    return 'N/A'
-  }
-
-  const start = new Date(event.bookedStartTime)
-  const end = new Date(event.bookedEndTime)
-  const durationMs = end.getTime() - start.getTime()
-
-  const hours = Math.floor(durationMs / (1000 * 60 * 60))
-  const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60))
-
-  if (hours > 0 && minutes > 0) {
-    return `${hours}h ${minutes}m`
-  } else if (hours > 0) {
-    return `${hours}h`
-  } else {
-    return `${minutes}m`
-  }
-}
-onMounted(() => {
-  console.log('eventData', props.eventData)
-})
 </script>
