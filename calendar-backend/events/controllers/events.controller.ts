@@ -46,7 +46,6 @@ const fetchBookedSlotsAction = async (
     res.status(200).json({
       success: true,
       data: bookedSlots,
-      count: bookedSlots.length,
     });
   } catch (error) {
     console.error("Error in fetchBookedSlotsAction:", error);

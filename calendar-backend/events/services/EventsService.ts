@@ -208,11 +208,11 @@ export default class EventsService {
           const docRef = this.eventRepo.createEventDocRef();
 
           // MUST use transaction.set() for atomic operation
-          // t.set(docRef, {
-          //   startTime: Timestamp.fromDate(requestedStartTime),
-          //   duration: duration,
-          //   endTime: Timestamp.fromDate(requestedEndTime),
-          // });
+          t.set(docRef, {
+            startTime: Timestamp.fromDate(requestedStartTime),
+            duration: duration,
+            endTime: Timestamp.fromDate(requestedEndTime),
+          });
         }
 
         return isSlotAvailable;
@@ -246,7 +246,10 @@ export default class EventsService {
     );
 
     if (bookedSlotData.length == 0) {
-      return [];
+      return {
+        result: [],
+        count: bookedSlotData.length,
+      };
     }
 
     const response = {
