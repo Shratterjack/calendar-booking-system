@@ -166,11 +166,11 @@ export default class EventsService {
 
       // Use default timezone from .env for working hours validation
       // This checks if the requested slot is between START_HOUR - END_HOUR in the configured timezone
-      const userTimezone = process.env.TIMEZONE;
+      const systemTimezone = process.env.TIMEZONE;
 
       const { startingHourTime, endingHourTime } = this.getSlotAvailableHours(
         requestedStartTime.toISOString().slice(0, 10),
-        userTimezone,
+        systemTimezone,
       );
 
       if (
@@ -215,11 +215,11 @@ export default class EventsService {
           const docRef = this.eventRepo.createEventDocRef();
 
           // MUST use transaction.set() for atomic operation
-          t.set(docRef, {
-            startTime: Timestamp.fromDate(requestedStartTime),
-            duration: duration,
-            endTime: Timestamp.fromDate(requestedEndTime),
-          });
+          // t.set(docRef, {
+          //   startTime: Timestamp.fromDate(requestedStartTime),
+          //   duration: duration,
+          //   endTime: Timestamp.fromDate(requestedEndTime),
+          // });
         }
 
         return isSlotAvailable;
@@ -243,6 +243,7 @@ export default class EventsService {
 
   getBookedEvents = async (startDate: string, endDate: string) => {
     const startingDate = new Date(startDate);
+    startingDate.setHours(0, 0, 0);
 
     const endingLastDate = new Date(endDate);
 
