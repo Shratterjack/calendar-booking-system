@@ -344,7 +344,7 @@ When checking or booking a slot, the service returns:
 **Booking Success Response:**
 ```json
 {
-  "status": "booked",
+  "isbookingSuccess": true,
   "message": "Slot booked successfully"
 }
 ```
@@ -352,7 +352,7 @@ When checking or booking a slot, the service returns:
 **Booking Failure Response:**
 ```json
 {
-  "status": "unavailable",
+  "isbookingSuccess": false,
   "conflictType": "SLOT_ALREADY_BOOKED",
   "message": "The requested time slot is already booked. Please choose a different time."
 }

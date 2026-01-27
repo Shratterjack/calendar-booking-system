@@ -28,13 +28,8 @@ export default class EventsService {
     const startHour = Number(process.env.START_HOUR);
     const endHour = Number(process.env.END_HOUR);
 
-    console.log("currentDate", currentDate);
     console.log("requestedTimezone", requestedTimezone);
 
-    // Create dates in the client's timezone, then convert to UTC
-    // This ensures working hours respect the client's local time
-    // dayjs.tz() creates a moment in the specified timezone
-    // .toDate() converts to JavaScript Date (which is always stored in UTC internally)
     const startingHourTime = dayjs
       .tz(
         `${currentDate} ${startHour.toString().padStart(2, "0")}:00:00`,
@@ -119,9 +114,6 @@ export default class EventsService {
       const { bookedStartTime } = slot;
       const { bookedEndTime } = slot;
 
-      console.log("requestedStartUTC", requestedStartTime.getTime());
-      console.log("bookedStartUTC", bookedEndTime.getTime());
-
       // Check 2.1: requestedStartTime === bookedStartTime
       if (requestedStartTime.getTime() === bookedStartTime.getTime()) {
         isSlotAvailable = false;
@@ -167,6 +159,7 @@ export default class EventsService {
       // Use default timezone from .env for working hours validation
       // This checks if the requested slot is between START_HOUR - END_HOUR in the configured timezone
       const systemTimezone = process.env.TIMEZONE;
+      console.log("systemTimezone", systemTimezone);
 
       const { startingHourTime, endingHourTime } = this.getSlotAvailableHours(
         requestedStartTime.toISOString().slice(0, 10),

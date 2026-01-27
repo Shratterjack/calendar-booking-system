@@ -7,7 +7,6 @@ export default class FirestoreService {
 
   static intializeFirestore() {
     if (!this.#db) {
-      console.log("new made");
       const db = getFirestore();
       this.#db = db;
     }
