@@ -28,8 +28,6 @@ export default class EventsService {
     const startHour = Number(process.env.START_HOUR);
     const endHour = Number(process.env.END_HOUR);
 
-    console.log("requestedTimezone", requestedTimezone);
-
     const startingHourTime = dayjs
       .tz(
         `${currentDate} ${startHour.toString().padStart(2, "0")}:00:00`,

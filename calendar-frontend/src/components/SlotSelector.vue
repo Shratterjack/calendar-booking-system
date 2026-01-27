@@ -54,16 +54,16 @@ const handleSlotSelect = async (value: string) => {
   const utcDate = new Date(clientDate.toLocaleString('en-US', { timeZone: 'UTC' }))
   console.log(utcDate.toISOString())
 
-  // const response = (await apiCall({
-  //   path,
-  //   requestOptions: { method: 'POST', body },
-  // })) as BookingResponse
+  const response = (await apiCall({
+    path,
+    requestOptions: { method: 'POST', body },
+  })) as BookingResponse
 
-  // if (response && response.success && response.data.isBookingSuccess) {
-  //   toast.success(response.data.message || 'Booking successful!')
-  // }
-  // {
-  //   toast.error(response.data.message || 'Booking failed. Please try again.')
-  // }
+  if (response && response.success && response.data.isBookingSuccess) {
+    toast.success(response.data.message || 'Booking successful!')
+  }
+  {
+    toast.error(response.data.message || 'Booking failed. Please try again.')
+  }
 }
 </script>
