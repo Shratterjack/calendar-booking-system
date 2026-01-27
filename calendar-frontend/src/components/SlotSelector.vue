@@ -26,12 +26,9 @@ type EventDisplay = {
 }
 
 type BookingResponse = {
-  success: boolean
-  data: {
-    isBookingSuccess: boolean
-    errorCode?: string
-    message: string
-  }
+  isBookingSuccess: boolean
+  errorCode?: string
+  message: string
 }
 
 const props = defineProps<{
@@ -47,23 +44,17 @@ const handleSlotSelect = async (value: string) => {
     duration: Number(props.duration),
   }
 
-  console.log('body', body)
-
   const path = `/events/booking`
-  const clientDate = new Date(body.slotTime)
-  const utcDate = new Date(clientDate.toLocaleString('en-US', { timeZone: 'UTC' }))
-  console.log(utcDate.toISOString())
 
   const response = (await apiCall({
     path,
     requestOptions: { method: 'POST', body },
   })) as BookingResponse
 
-  if (response && response.success && response.data.isBookingSuccess) {
-    toast.success(response.data.message || 'Booking successful!')
-  }
-  {
-    toast.error(response.data.message || 'Booking failed. Please try again.')
+  if (response && response.isBookingSuccess) {
+    toast.success(response.message || 'Booking successful!')
+  } else {
+    toast.error(response.message || 'Booking failed. Please try again.')
   }
 }
 </script>
