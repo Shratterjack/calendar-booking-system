@@ -149,12 +149,14 @@ export default class EventsService {
 
   bookEventSlot = async (slotTime: string, duration: number) => {
     try {
+      console.log("slotTime", slotTime);
+
       const requestedStartTime = new Date(slotTime);
       const requestedEndTime = this.addMinutes(requestedStartTime, duration);
 
-      console.log("startTime", requestedStartTime);
+      console.log("requestedStartTime", requestedStartTime);
 
-      console.log("endTime", requestedEndTime);
+      console.log("requestedEndTime", requestedEndTime);
 
       // Use default timezone from .env for working hours validation
       // This checks if the requested slot is between START_HOUR - END_HOUR in the configured timezone
