@@ -2,7 +2,7 @@
   <button
     type="button"
     class="border border-slate-200 rounded-lg px-4 py-2 hover:border-indigo-500 cursor-pointer"
-    @click="emit('slotSelect', actualTime)"
+    @click="handleSlotSelect(actualTime)"
   >
     {{ displayTimeText }}
   </button>
@@ -23,4 +23,9 @@ const displayTimeText = computed(() => {
   const timeSplit = props.time.split(',')
   return timeSplit[1]
 })
+
+const handleSlotSelect = (actualTime: string) => {
+  console.log('actual time', actualTime)
+  emit('slotSelect', actualTime)
+}
 </script>

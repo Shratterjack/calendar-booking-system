@@ -154,9 +154,9 @@ export default class EventsService {
       const requestedStartTime = new Date(slotTime);
       const requestedEndTime = this.addMinutes(requestedStartTime, duration);
 
-      console.log("requestedStartTime", requestedStartTime);
+      console.log("bookingReqStartTime", requestedStartTime);
 
-      console.log("requestedEndTime", requestedEndTime);
+      console.log("bookingReqEndTime", requestedEndTime);
 
       // Use default timezone from .env for working hours validation
       // This checks if the requested slot is between START_HOUR - END_HOUR in the configured timezone

@@ -4,14 +4,51 @@ A RESTful API service for managing calendar event bookings with slot availabilit
 
 ## Table of Contents
 
+- [Setup](#setup)
 - [Structure](#structure)
 - [Database Models](#database-models)
 - [Validation](#validation)
 - [Error Handling](#error-handling)
-- [Setup](#setup)
 - [API Endpoints](#api-endpoints)
 
 ---
+## Setup
+
+### Prerequisites
+
+- Node.js (v18+)
+- Firebase Admin SDK credentials
+- Firestore database
+
+### Installation
+
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Create a `.env` file:
+   ```env
+   START_HOUR=9
+   END_HOUR=17
+   DURATION=30
+   PORT=3000
+   ```
+
+4. Configure Firebase credentials in `config/db.ts`
+
+### Running the Application
+
+**Development mode (with auto-reload):**
+```bash
+npm run dev
+```
+
+**Production mode:**
+```bash
+npm start
+```
 
 ## Structure
 
@@ -114,16 +151,9 @@ type FreeSlotsResponse = {
 
 ### Firestore Queries
 
-The service performs the following types of queries:
+The service considers and check  the following types of events:
 
 1. **Find overlapping events:**
-   ```typescript
-   db.collection("events")
-     .where("startTime", "<", requestedEndTime)
-     .where("endTime", ">", requestedStartTime)
-     .orderBy("startTime")
-   ```
-
 2. **Find events in date range:**
    ```typescript
    db.collection("events")
@@ -245,9 +275,7 @@ GET /events/list?startDate=2026-01-23&endDate=2026-01-30
 - `duration`:
   - Required
   - Must be a positive integer
-  - Minimum: 15 minutes
-  - Maximum: 480 minutes (8 hours)
-  - Must be a multiple of 15
+  - Values: 30 minutes,45 minutes 
 
 **Example Request:**
 ```json
@@ -269,7 +297,7 @@ When validation fails, the API returns a **400 Bad Request** with detailed error
   "errors": [
     {
       "field": "duration",
-      "message": "duration must be a multiple of 15"
+      "message": "duration must be a number"
     },
     {
       "field": "slotTime",
@@ -398,43 +426,7 @@ Global Error Handler
 
 ---
 
-## Setup
 
-### Prerequisites
-
-- Node.js (v18+)
-- Firebase Admin SDK credentials
-- Firestore database
-
-### Installation
-
-1. Clone the repository
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Create a `.env` file:
-   ```env
-   START_HOUR=9
-   END_HOUR=17
-   DURATION=30
-   PORT=3000
-   ```
-
-4. Configure Firebase credentials in `config/db.ts`
-
-### Running the Application
-
-**Development mode (with auto-reload):**
-```bash
-npm run dev
-```
-
-**Production mode:**
-```bash
-npm start
-```
 
 ### Testing
 

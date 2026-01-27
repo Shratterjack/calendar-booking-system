@@ -5,10 +5,10 @@
         <RouterLink class="hover:text-blue-500 text-slate-500" to="/">Home</RouterLink>
       </div>
       <div class="px-2 py-4">
-        <RouterLink class="hover:text-blue-500 text-slate-500" to="/events">Events</RouterLink>
+        <RouterLink class="hover:text-blue-500 text-slate-500" to="/booking">Schedule</RouterLink>
       </div>
       <div class="px-2 py-4">
-        <RouterLink class="hover:text-blue-500 text-slate-500" to="/booking">Schedule</RouterLink>
+        <RouterLink class="hover:text-blue-500 text-slate-500" to="/events">Events</RouterLink>
       </div>
     </div>
   </nav>

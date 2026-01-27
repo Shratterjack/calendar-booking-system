@@ -9,10 +9,13 @@
         @slot-select="handleSlotSelect"
       />
     </template>
+    <template v-else>
+      <div>Please Select your preferences</div>
+    </template>
   </div>
 </template>
 <script setup lang="ts">
-import { onMounted } from 'vue'
+import { useToast } from 'vue-toastification'
 import TimeSlot from './common/TimeSlot.vue'
 
 import { apiCall } from '../../utilities/apiService'
@@ -22,28 +25,45 @@ type EventDisplay = {
   startingDisplayTime: string
 }
 
+type BookingResponse = {
+  success: boolean
+  data: {
+    isBookingSuccess: boolean
+    errorCode?: string
+    message: string
+  }
+}
+
 const props = defineProps<{
   timeSlots: EventDisplay[]
   duration: number
 }>()
 
-// const
+const toast = useToast()
 
-// const emit = defineEmits<{
-//   'select-date': [value: EventDisplay]
-// }>()
 const handleSlotSelect = async (value: string) => {
-  console.log('slot value', value)
-
   const body = {
     slotTime: value,
     duration: Number(props.duration),
   }
 
+  console.log('body', body)
+
   const path = `/events/booking`
+  const clientDate = new Date(body.slotTime)
+  const utcDate = new Date(clientDate.toLocaleString('en-US', { timeZone: 'UTC' }))
+  console.log(utcDate.toISOString())
 
-  const response = await apiCall({ path, requestOptions: { method: 'POST', body } })
+  // const response = (await apiCall({
+  //   path,
+  //   requestOptions: { method: 'POST', body },
+  // })) as BookingResponse
+
+  // if (response && response.success && response.data.isBookingSuccess) {
+  //   toast.success(response.data.message || 'Booking successful!')
+  // }
+  // {
+  //   toast.error(response.data.message || 'Booking failed. Please try again.')
+  // }
 }
-
-onMounted(() => {})
 </script>
