@@ -52,9 +52,11 @@ export default class EventsService {
     slotTime: string,
     timezone: string,
   ): Promise<FreeSlotsResponse[]> => {
+    const systemTimezone = process.env.TIMEZONE;
+
     let { startingHourTime, endingHourTime } = this.getSlotAvailableHours(
       slotTime,
-      timezone,
+      systemTimezone,
     );
 
     const duration = Number(process.env.DURATION);
