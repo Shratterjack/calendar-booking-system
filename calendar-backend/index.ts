@@ -4,7 +4,7 @@ import { loadEnvFile } from "node:process";
 loadEnvFile(); // Loads .env
 
 import cors from "cors";
-import { getFirebaseApp } from "./config/db.ts";
+import { getFirebaseApp } from "./config/firebase.ts";
 
 import eventRouter from "./events/routes/events.route.ts";
 
