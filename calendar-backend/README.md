@@ -10,7 +10,6 @@ A RESTful API service for managing calendar event bookings with slot availabilit
 - [Validation](#validation)
 - [Error Handling](#error-handling)
 - [API Endpoints](#api-endpoints)
-
 ---
 ## Setup
 
