@@ -79,7 +79,7 @@ const handleApplyFilter = async () => {
     return
   }
 
-  const response = await fetchEvents(startDate.value, endDate.value)
-  eventList.value = response.result
+  const { result } = await fetchEvents(startDate.value, endDate.value)
+  eventList.value = result
 }
 </script>
